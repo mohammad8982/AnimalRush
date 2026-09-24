@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#2563eb">
+  <title>AnimalRush | رزرو تبلیغات و خرید سکه</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div id="toastRoot"></div>
+
+<header class="topbar">
+  <div class="brand" onclick="showView('home')">
+    <div class="brand-mark">AR</div>
+    <div><b id="brandName">AnimalRush</b><small>رزرو تبلیغات و خدمات</small></div>
+  </div>
+  <nav id="desktopNav">
+    <button data-view="home">خانه</button>
+    <button data-view="reserve">رزرو تبلیغات</button>
+    <button data-view="coins">خرید سکه</button>
+    <button data-view="orders">پیگیری سفارش</button>
+    <button data-view="support">پشتیبانی</button>
+    <button id="adminNav" class="hidden" data-view="admin">پنل مدیریت</button>
+  </nav>
+  <div class="actions">
+    <button id="themeBtn" class="icon-btn" title="تغییر حالت">◐</button>
+    <button id="authBtn" class="primary-btn" onclick="openAuth()">ورود</button>
+  </div>
+</header>
+
+<main>
+  <section id="view-home" class="view active">
+    <div class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">ANIMALRUSH SERVICES</span>
+        <h1 id="heroTitle">سریع، ساده و واقعی</h1>
+        <p id="heroText">رزرو تبلیغات و خرید سکه Animal Rush با ثبت سفارش و پیگیری آنلاین.</p>
+        <div class="hero-actions">
+          <button class="primary-btn big" onclick="showView('reserve')">رزرو تبلیغات</button>
+          <button class="ghost-btn big" onclick="showView('coins')">خرید سکه</button>
+        </div>
+      </div>
+      <div class="hero-card">
+        <div class="stat-icon">🪙</div>
+        <h3>خرید سکه Animal Rush</h3>
+        <p>پکیج موردنظر را انتخاب کن و سفارشت را ثبت کن.</p>
+        <button class="primary-btn" onclick="showView('coins')">مشاهده پکیج‌ها</button>
+      </div>
+    </div>
+    <div class="grid-3">
+      <article class="info-card"><div>📅</div><h3>رزرو تبلیغات</h3><p>روزهای آزاد را ببین و درخواست رزرو ثبت کن.</p></article>
+      <article class="info-card"><div>💳</div><h3>پرداخت و رسید</h3><p>شماره کارت و اطلاعات پرداخت از پنل مدیریت قابل تغییر است.</p></article>
+      <article class="info-card"><div>🔎</div><h3>پیگیری سفارش</h3><p>وضعیت سفارش‌های ثبت‌شده را از حساب خودت ببین.</p></article>
+    </div>
+  </section>
+
+  <section id="view-reserve" class="view">
+    <div class="section-head"><div><span class="eyebrow">ADVERTISEMENT</span><h2>رزرو تبلیغات</h2></div><span id="reservePriceBadge" class="price-badge">—</span></div>
+    <div class="panel">
+      <div class="calendar-head"><button class="ghost-btn" onclick="changeMonth(-1)">‹</button><h3 id="monthLabel"></h3><button class="ghost-btn" onclick="changeMonth(1)">›</button></div>
+      <div id="calendar" class="calendar"></div>
+      <div class="legend"><span><i class="dot available"></i> آزاد</span><span><i class="dot reserved"></i> رزرو شده</span><span><i class="dot blocked"></i> مسدود</span></div>
+      <div id="reservationForm" class="form-card hidden">
+        <h3>ثبت درخواست رزرو <span id="selectedDateLabel"></span></h3>
+        <div class="form-grid">
+          <label>نام و نام خانوادگی<input id="rName" placeholder="مثلاً محمد ابراهیمی"></label>
+          <label>آیدی تلگرام<input id="rUsername" placeholder="@username"></label>
+          <label>شماره تماس<input id="rPhone" placeholder="09..."></label>
+          <label>توضیحات<textarea id="rDesc" placeholder="توضیحات تبلیغ..."></textarea></label>
+        </div>
+        <div class="pay-box"><b>مبلغ:</b> <span id="rAmount">—</span><br><b>کارت:</b> <span id="cardNumberPublic">—</span> <button class="copy-btn" onclick="copyCard()">کپی</button><br><small id="cardOwnerPublic"></small></div>
+        <button class="primary-btn" onclick="submitReservation()">ثبت درخواست</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-coins" class="view">
+    <div class="section-head"><div><span class="eyebrow">ANIMAL RUSH</span><h2>خرید سکه</h2></div><span class="muted">پکیج‌ها از پنل مدیریت قابل تغییرند</span></div>
+    <div id="coinGrid" class="product-grid"></div>
+  </section>
+
+  <section id="view-orders" class="view">
+    <div class="section-head"><div><span class="eyebrow">ORDERS</span><h2>سفارش‌های من</h2></div></div>
+    <div id="ordersList" class="list"></div>
+  </section>
+
+  <section id="view-support" class="view">
+    <div class="section-head"><div><span class="eyebrow">SUPPORT</span><h2>پشتیبانی</h2></div></div>
+    <div class="panel narrow">
+      <label>نام<input id="sName"></label>
+      <label>آیدی تلگرام<input id="sUsername" placeholder="@username"></label>
+      <label>پیام<textarea id="sMessage" rows="6" placeholder="پیامت را بنویس..."></textarea></label>
+      <button class="primary-btn" onclick="sendSupport()">ارسال پیام</button>
+    </div>
+  </section>
+
+  <section id="view-admin" class="view">
+    <div class="admin-shell">
+      <aside class="admin-side">
+        <div class="admin-title">پنل مدیریت</div>
+        <button class="active" onclick="adminTab('dashboard',this)">📊 داشبورد</button>
+        <button onclick="adminTab('settings',this)">⚙️ تنظیمات سایت</button>
+        <button onclick="adminTab('coins',this)">🪙 محصولات سکه</button>
+        <button onclick="adminTab('days',this)">📅 روزهای رزرو</button>
+        <button onclick="adminTab('reservations',this)">📢 رزروها</button>
+        <button onclick="adminTab('orders',this)">🛒 سفارش‌ها</button>
+        <button onclick="adminTab('support',this)">💬 پشتیبانی</button>
+      </aside>
+      <div class="admin-content">
+        <div id="admin-dashboard" class="admin-tab"></div>
+        <div id="admin-settings" class="admin-tab hidden"></div>
+        <div id="admin-coins" class="admin-tab hidden"></div>
+        <div id="admin-days" class="admin-tab hidden"></div>
+        <div id="admin-reservations" class="admin-tab hidden"></div>
+        <div id="admin-orders" class="admin-tab hidden"></div>
+        <div id="admin-support" class="admin-tab hidden"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><span>© <span id="year"></span> AnimalRush</span><span>ساخته‌شده با Lahzeh Pro</span></footer>
+
+<div id="authModal" class="modal hidden">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeAuth()">×</button>
+    <div class="tabs"><button id="loginTab" class="active" onclick="authMode('login')">ورود</button><button id="signupTab" onclick="authMode('signup')">ثبت‌نام</button></div>
+    <h2 id="authTitle">ورود</h2>
+    <input id="authEmail" type="email" placeholder="ایمیل">
+    <input id="authPassword" type="password" placeholder="رمز عبور">
+    <button class="primary-btn full" onclick="submitAuth()">ادامه</button>
+  </div>
+</div>
+
+<div id="buyModal" class="modal hidden">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeBuy()">×</button>
+    <h2 id="buyTitle">ثبت سفارش</h2>
+    <input id="bName" placeholder="نام و نام خانوادگی">
+    <input id="bUsername" placeholder="آیدی تلگرام">
+    <input id="bPhone" placeholder="شماره تماس">
+    <div class="pay-box"><b>مبلغ:</b> <span id="bAmount"></span><br><b>کارت:</b> <span id="bCard"></span> <button class="copy-btn" onclick="copyCard()">کپی</button><br><small id="bOwner"></small></div>
+    <label>لینک/آدرس رسید پرداخت (اختیاری)<input id="bReceipt" placeholder="https://..."></label>
+    <button class="primary-btn full" onclick="submitCoinOrder()">ثبت سفارش</button>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://vzjoefmabbhizicmvnbd.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_GmF2bct7pbiH6uXGKXMBrw_3X_iHBk0";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+let settings = {};
+let currentUser = null;
+let selectedDate = null;
+let selectedProduct = null;
+let calendarMonth = new Date();
+let authAction = "login";
+let dark = localStorage.getItem("ar_dark") === "1";
+
+const themes = {
+  blue:"#2563eb", green:"#16a34a", purple:"#7c3aed", red:"#dc2626",
+  orange:"#ea580c", pink:"#db2777", cyan:"#0891b2", gold:"#ca8a04",
+  black:"#111827", gray:"#4b5563"
+};
+
+function toast(msg, ok=true){ const r=document.getElementById("toastRoot"); const d=document.createElement("div"); d.className="toast "+(ok?"":"bad"); d.textContent=msg; r.appendChild(d); setTimeout(()=>d.remove(),3500); }
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));}
+function money(n){return Number(n||0).toLocaleString("fa-IR")+" "+(settings.currency||"تومان");}
+function showView(v){
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+  const el=document.getElementById("view-"+v); if(el) el.classList.add("active");
+  document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===v));
+  if(v==="reserve") renderCalendar();
+  if(v==="coins") loadProducts();
+  if(v==="orders") loadOrders();
+  if(v==="admin" && currentUser) loadAdmin();
+  scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>showView(b.dataset.view));
+
+async function loadSettings(){
+  const {data,error}=await sb.from("site_settings").select("*").eq("id",1).single();
+  if(error){console.error(error); return;}
+  settings=data||{};
+  applySettings();
+}
+function applySettings(){
+  document.documentElement.style.setProperty("--primary", settings.primary_color || "#2563eb");
+  document.documentElement.style.setProperty("--primary-soft", hexToRgba(settings.primary_color||"#2563eb",.12));
+  document.getElementById("brandName").textContent=settings.site_name||"AnimalRush";
+  document.title=settings.site_title||"AnimalRush";
+  document.getElementById("heroTitle").textContent=settings.site_title||"سریع، ساده و واقعی";
+  document.getElementById("heroText").textContent=settings.site_description||"رزرو تبلیغات و خرید سکه Animal Rush با ثبت سفارش و پیگیری آنلاین.";
+  document.getElementById("reservePriceBadge").textContent=money(settings.reservation_price);
+  document.getElementById("cardNumberPublic").textContent=settings.card_number||"ثبت نشده";
+  document.getElementById("cardOwnerPublic").textContent=settings.card_owner||"";
+  if(settings.theme_mode==="dark") dark=true;
+  applyDark();
+}
+function hexToRgba(hex,a){let h=hex.replace("#",""); if(h.length===3)h=h.split("").map(x=>x+x).join(""); const n=parseInt(h,16); return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`;}
+function applyDark(){document.body.classList.toggle("dark",dark); localStorage.setItem("ar_dark",dark?"1":"0");}
+document.getElementById("themeBtn").onclick=()=>{dark=!dark;applyDark();};
+
+async function getSession(){
+  const {data}=await sb.auth.getSession(); currentUser=data.session?.user||null; await refreshUserUI();
+}
+async function refreshUserUI(){
+  const btn=document.getElementById("authBtn");
+  if(!currentUser){btn.textContent="ورود";document.getElementById("adminNav").classList.add("hidden");return;}
+  const {data:p}=await sb.from("profiles").select("role,full_name,username").eq("id",currentUser.id).single();
+  btn.textContent="خروج";
+  btn.onclick=async()=>{await sb.auth.signOut(); location.reload();};
+  if(p?.role==="admin") document.getElementById("adminNav").classList.remove("hidden");
+}
+function openAuth(){ if(currentUser){return;} document.getElementById("authModal").classList.remove("hidden"); }
+function closeAuth(){document.getElementById("authModal").classList.add("hidden");}
+function authMode(m){authAction=m;document.getElementById("loginTab").classList.toggle("active",m==="login");document.getElementById("signupTab").classList.toggle("active",m==="signup");document.getElementById("authTitle").textContent=m==="login"?"ورود":"ثبت‌نام";}
+async function submitAuth(){
+  const email=document.getElementById("authEmail").value.trim(), password=document.getElementById("authPassword").value;
+  if(!email||!password)return toast("ایمیل و رمز عبور را وارد کن.",false);
+  let res;
+  if(authAction==="login") res=await sb.auth.signInWithPassword({email,password});
+  else res=await sb.auth.signUp({email,password});
+  if(res.error)return toast(res.error.message,false);
+  if(authAction==="signup") toast("ثبت‌نام انجام شد. اگر تأیید ایمیل فعال باشد، ایمیلت را تأیید کن.");
+  else toast("ورود موفق بود.");
+  closeAuth(); await getSession();
+}
+async function requireAuth(){if(!currentUser){openAuth();toast("ابتدا وارد حساب شو.",false);return false;}return true;}
+
+function changeMonth(n){calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+n,1);renderCalendar();}
+async function renderCalendar(){
+  const y=calendarMonth.getFullYear(),m=calendarMonth.getMonth();
+  document.getElementById("monthLabel").textContent=new Intl.DateTimeFormat("fa-IR",{year:"numeric",month:"long"}).format(calendarMonth);
+  const start=new Date(y,m,1), days=new Date(y,m+1,0).getDate();
+  const {data}=await sb.from("reservation_days").select("*").gte("reservation_date",`${y}-${String(m+1).padStart(2,"0")}-01`).lte("reservation_date",`${y}-${String(m+1).padStart(2,"0")}-${days}`);
+  const map=Object.fromEntries((data||[]).map(x=>[x.reservation_date,x]));
+  let html=["شنبه","یکشنبه","دوشنبه","سه‌شنبه","چهارشنبه","پنجشنبه","جمعه"].map(x=>`<div class="dow">${x}</div>`).join("");
+  const jsDay=(start.getDay()+1)%7; for(let i=0;i<jsDay;i++)html+=`<div class="cal-empty"></div>`;
+  for(let d=1;d<=days;d++){
+    const date=`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`, row=map[date], status=row?.status||"available";
+    const cls=status==="available"?"available":status==="reserved"?"reserved":"blocked";
+    html+=`<button class="cal-day ${cls}" ${status!=="available"?"disabled":""} onclick="selectDate('${date}')"><b>${d}</b><small>${status==="available"?"آزاد":status==="reserved"?"رزرو":"مسدود"}</small></button>`;
+  }
+  document.getElementById("calendar").innerHTML=html;
+}
+async function selectDate(date){
+  if(!(await requireAuth()))return;
+  selectedDate=date;
+  document.getElementById("selectedDateLabel").textContent=new Intl.DateTimeFormat("fa-IR",{dateStyle:"long"}).format(new Date(date+"T00:00:00"));
+  document.getElementById("rAmount").textContent=money(settings.reservation_price);
+  document.getElementById("reservationForm").classList.remove("hidden");
+}
+async function submitReservation(){
+  if(!(await requireAuth()))return;
+  const payload={user_id:currentUser.id,reservation_date:selectedDate,customer_name:document.getElementById("rName").value.trim(),telegram_username:document.getElementById("rUsername").value.trim(),phone:document.getElementById("rPhone").value.trim(),description:document.getElementById("rDesc").value.trim(),amount:Number(settings.reservation_price||0)};
+  if(!payload.customer_name)return toast("نام را وارد کن.",false);
+  const {error}=await sb.from("reservations").insert(payload);
+  if(error)return toast(error.message,false);
+  await sb.from("reservation_days").upsert({reservation_date:selectedDate,price:Number(settings.reservation_price||0),status:"reserved"},{onConflict:"reservation_date"});
+  toast("درخواست رزرو ثبت شد."); document.getElementById("reservationForm").classList.add("hidden"); renderCalendar();
+}
+async function loadProducts(){
+  const {data,error}=await sb.from("coin_products").select("*").eq("is_active",true).order("sort_order");
+  if(error)return toast(error.message,false);
+  document.getElementById("coinGrid").innerHTML=(data||[]).map(p=>`<article class="product-card"><div class="coin-icon">🪙</div><h3>${esc(p.name)}</h3><div class="coin-count">${Number(p.coins).toLocaleString("fa-IR")} سکه</div><p>${esc(p.description||"پکیج سکه Animal Rush")}</p><strong>${money(p.price)}</strong><button class="primary-btn full" onclick='openBuy(${JSON.stringify(p)})'>خرید</button></article>`).join("")||`<div class="empty">فعلاً محصولی ثبت نشده.</div>`;
+}
+function openBuy(p){if(!currentUser){openAuth();return;}selectedProduct=p;document.getElementById("buyTitle").textContent=`خرید ${p.name}`;document.getElementById("bAmount").textContent=money(p.price);document.getElementById("bCard").textContent=settings.card_number||"ثبت نشده";document.getElementById("bOwner").textContent=settings.card_owner||"";document.getElementById("buyModal").classList.remove("hidden");}
+function closeBuy(){document.getElementById("buyModal").classList.add("hidden");}
+async function submitCoinOrder(){
+  if(!selectedProduct)return;
+  const payload={user_id:currentUser.id,product_id:selectedProduct.id,product_name:selectedProduct.name,coins:selectedProduct.coins,amount:selectedProduct.price,customer_name:document.getElementById("bName").value.trim(),telegram_username:document.getElementById("bUsername").value.trim(),phone:document.getElementById("bPhone").value.trim(),receipt_url:document.getElementById("bReceipt").value.trim()};
+  const {error}=await sb.from("coin_orders").insert(payload); if(error)return toast(error.message,false);
+  toast("سفارش سکه ثبت شد.");closeBuy();showView("orders");
+}
+async function loadOrders(){
+  if(!currentUser){document.getElementById("ordersList").innerHTML=`<div class="empty">برای دیدن سفارش‌ها وارد حساب شو.</div>`;return;}
+  const [{data:coins},{data:res}]=await Promise.all([
+    sb.from("coin_orders").select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false}),
+    sb.from("reservations").select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false})
+  ]);
+  const statusMap={pending:"در انتظار",approved:"تأیید شده",rejected:"رد شده",completed:"تکمیل شده",cancelled:"لغو شده"};
+  const html=[...(coins||[]).map(o=>`<div class="order-row"><div><b>🪙 ${esc(o.product_name)}</b><small>${new Date(o.created_at).toLocaleString("fa-IR")}</small></div><span class="status ${o.status}">${statusMap[o.status]||o.status}</span><strong>${money(o.amount)}</strong></div>`),...(res||[]).map(o=>`<div class="order-row"><div><b>📢 رزرو ${new Date(o.reservation_date+"T00:00:00").toLocaleDateString("fa-IR")}</b><small>${new Date(o.created_at).toLocaleString("fa-IR")}</small></div><span class="status ${o.status}">${statusMap[o.status]||o.status}</span><strong>${money(o.amount)}</strong></div>`)];
+  document.getElementById("ordersList").innerHTML=html.join("")||`<div class="empty">سفارشی نداری.</div>`;
+}
+async function sendSupport(){
+  if(!(await requireAuth()))return;
+  const msg=document.getElementById("sMessage").value.trim(); if(!msg)return toast("پیام را وارد کن.",false);
+  const {error}=await sb.from("support_messages").insert({user_id:currentUser.id,name:document.getElementById("sName").value.trim(),telegram_username:document.getElementById("sUsername").value.trim(),message:msg});
+  if(error)return toast(error.message,false);toast("پیام برای پشتیبانی ارسال شد.");document.getElementById("sMessage").value="";
+}
+async function copyCard(){if(!settings.card_number)return toast("شماره کارت ثبت نشده.",false);await navigator.clipboard.writeText(settings.card_number);toast("شماره کارت کپی شد.");}
+
+async function isAdmin(){
+  if(!currentUser)return false;
+  const {data}=await sb.from("profiles").select("role").eq("id",currentUser.id).single();
+  return data?.role==="admin";
+}
+function adminTab(name,btn){document.querySelectorAll(".admin-tab").forEach(x=>x.classList.add("hidden"));document.getElementById("admin-"+name).classList.remove("hidden");document.querySelectorAll(".admin-side button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");}
+async function loadAdmin(){
+  if(!(await isAdmin())){toast("دسترسی مدیریت نداری.",false);showView("home");return;}
+  await Promise.all([adminDashboard(),adminSettings(),adminCoins(),adminDays(),adminReservations(),adminOrders(),adminSupport()]);
+}
+async function adminDashboard(){
+  const [{count:r},{count:o},{count:u},{count:p}]=await Promise.all([
+    sb.from("reservations").select("*",{count:"exact",head:true}),
+    sb.from("coin_orders").select("*",{count:"exact",head:true}),
+    sb.from("profiles").select("*",{count:"exact",head:true}),
+    sb.from("coin_products").select("*",{count:"exact",head:true})
+  ]);
+  document.getElementById("admin-dashboard").innerHTML=`<h2>داشبورد</h2><div class="admin-stats"><div><b>${r||0}</b><span>رزرو</span></div><div><b>${o||0}</b><span>سفارش سکه</span></div><div><b>${u||0}</b><span>کاربر</span></div><div><b>${p||0}</b><span>محصول</span></div></div><div class="panel"><h3>وضعیت سیستم</h3><p>اتصال به Supabase برقرار است و پنل به دیتابیس واقعی متصل شده.</p></div>`;
+}
+async function adminSettings(){
+  const s=settings;
+  document.getElementById("admin-settings").innerHTML=`<h2>تنظیمات سایت</h2><div class="panel form-grid">
+  <label>نام سایت<input id="aSiteName" value="${esc(s.site_name)}"></label>
+  <label>عنوان سایت<input id="aTitle" value="${esc(s.site_title)}"></label>
+  <label>توضیحات<textarea id="aDesc">${esc(s.site_description||"")}</textarea></label>
+  <label>قیمت رزرو<input id="aReservePrice" type="number" value="${s.reservation_price||0}"></label>
+  <label>شماره کارت<input id="aCard" value="${esc(s.card_number||"")}"></label>
+  <label>نام صاحب کارت<input id="aOwner" value="${esc(s.card_owner||"")}"></label>
+  <label>شناسه تلگرام<input id="aTelegram" value="${esc(s.telegram_id||"")}"></label>
+  <label>آیدی پشتیبانی<input id="aSupport" value="${esc(s.support_username||"")}"></label>
+  <label>واحد پول<input id="aCurrency" value="${esc(s.currency||"تومان")}"></label>
+  <label>رنگ سایت<select id="aColor">${Object.entries(themes).map(([k,v])=>`<option value="${v}" ${s.primary_color===v?"selected":""}>${k}</option>`).join("")}</select></label>
+  </div>
+  <div class="color-preview" id="colorPreview">پیش‌نمایش رنگ سایت</div>
+  <button class="primary-btn" onclick="saveSettings()">ذخیره تنظیمات</button>`;
+  document.getElementById("aColor").onchange=e=>document.getElementById("colorPreview").style.background=e.target.value;
+  document.getElementById("colorPreview").style.background=s.primary_color||"#2563eb";
+}
+async function saveSettings(){
+  const patch={site_name:val("aSiteName"),site_title:val("aTitle"),site_description:val("aDesc"),reservation_price:Number(val("aReservePrice")||0),card_number:val("aCard"),card_owner:val("aOwner"),telegram_id:val("aTelegram"),support_username:val("aSupport"),currency:val("aCurrency"),primary_color:val("aColor"),updated_at:new Date().toISOString()};
+  const {error}=await sb.from("site_settings").update(patch).eq("id",1); if(error)return toast(error.message,false);await loadSettings();toast("تنظیمات ذخیره شد.");adminSettings();
+}
+function val(id){return document.getElementById(id).value.trim();}
+async function adminCoins(){
+  const {data}=await sb.from("coin_products").select("*").order("sort_order");
+  document.getElementById("admin-coins").innerHTML=`<h2>محصولات سکه</h2><button class="primary-btn" onclick="newCoin()">+ افزودن محصول</button><div class="admin-table">${(data||[]).map(p=>`<div class="table-row"><div><b>${esc(p.name)}</b><small>${Number(p.coins).toLocaleString("fa-IR")} سکه</small></div><input class="mini" type="number" value="${p.price}" onchange="updateCoin('${p.id}',{price:Number(this.value)})"><button class="ghost-btn" onclick="toggleCoin('${p.id}',${!p.is_active})">${p.is_active?"فعال":"غیرفعال"}</button><button class="danger-btn" onclick="deleteCoin('${p.id}')">حذف</button></div>`).join("")}</div>`;
+}
+async function updateCoin(id,patch){const {error}=await sb.from("coin_products").update({...patch,updated_at:new Date().toISOString()}).eq("id",id);if(error)toast(error.message,false);else{toast("محصول به‌روزرسانی شد.");loadProducts();}}
+async function toggleCoin(id,v){await updateCoin(id,{is_active:v});adminCoins();}
+async function deleteCoin(id){if(!confirm("حذف شود؟"))return;const {error}=await sb.from("coin_products").delete().eq("id",id);if(error)toast(error.message,false);else{toast("حذف شد.");adminCoins();}}
+async function newCoin(){const name=prompt("نام محصول؟","پکیج جدید");if(!name)return;const coins=Number(prompt("تعداد سکه؟","10000"));const price=Number(prompt("قیمت؟","0"));const {error}=await sb.from("coin_products").insert({name,coins,price,sort_order:99});if(error)toast(error.message,false);else adminCoins();}
+async function adminDays(){
+  const {data}=await sb.from("reservation_days").select("*").order("reservation_date",{ascending:false}).limit(100);
+  document.getElementById("admin-days").innerHTML=`<h2>روزهای رزرو</h2><div class="inline-form"><input id="newDay" type="date"><select id="newDayStatus"><option value="available">آزاد</option><option value="blocked">مسدود</option><option value="reserved">رزرو</option></select><button class="primary-btn" onclick="saveDay()">ثبت روز</button></div><div class="admin-table">${(data||[]).map(d=>`<div class="table-row"><b>${esc(d.reservation_date)}</b><select onchange="setDay('${d.id}',this.value)"><option ${d.status==="available"?"selected":""}>available</option><option ${d.status==="blocked"?"selected":""}>blocked</option><option ${d.status==="reserved"?"selected":""}>reserved</option></select><button class="danger-btn" onclick="deleteDay('${d.id}')">حذف</button></div>`).join("")}</div>`;
+}
+async function saveDay(){const date=val("newDay");if(!date)return;const status=document.getElementById("newDayStatus").value;const {error}=await sb.from("reservation_days").upsert({reservation_date:date,status,price:Number(settings.reservation_price||0)},{onConflict:"reservation_date"});if(error)toast(error.message,false);else{toast("روز ذخیره شد.");adminDays();renderCalendar();}}
+async function setDay(id,status){await sb.from("reservation_days").update({status,updated_at:new Date().toISOString()}).eq("id",id);renderCalendar();}
+async function deleteDay(id){await sb.from("reservation_days").delete().eq("id",id);adminDays();renderCalendar();}
+function statusLabel(s){return {pending:"در انتظار",approved:"تأیید شده",rejected:"رد شده",completed:"تکمیل شده",cancelled:"لغو شده"}[s]||s;}
+async function adminReservations(){
+  const {data}=await sb.from("reservations").select("*").order("created_at",{ascending:false}).limit(100);
+  document.getElementById("admin-reservations").innerHTML=`<h2>رزروهای تبلیغات</h2><div class="admin-table">${(data||[]).map(o=>`<div class="table-row"><div><b>${esc(o.customer_name||"بدون نام")}</b><small>${esc(o.reservation_date)} · ${esc(o.telegram_username||"")}</small></div><strong>${money(o.amount)}</strong><select onchange="setReservationStatus('${o.id}',this.value)">${["pending","approved","rejected","cancelled"].map(s=>`<option value="${s}" ${o.status===s?"selected":""}>${statusLabel(s)}</option>`).join("")}</select></div>`).join("")||"<div class='empty'>رزروی نیست.</div>"}</div>`;
+}
+async function setReservationStatus(id,status){const {error}=await sb.from("reservations").update({status,updated_at:new Date().toISOString()}).eq("id",id);if(error)toast(error.message,false);else toast("وضعیت رزرو تغییر کرد.");}
+async function adminOrders(){
+  const {data}=await sb.from("coin_orders").select("*").order("created_at",{ascending:false}).limit(100);
+  document.getElementById("admin-orders").innerHTML=`<h2>سفارش‌های سکه</h2><div class="admin-table">${(data||[]).map(o=>`<div class="table-row"><div><b>${esc(o.product_name||"محصول")}</b><small>${esc(o.customer_name||"")} · ${esc(o.telegram_username||"")}</small></div><strong>${money(o.amount)}</strong><select onchange="setOrderStatus('${o.id}',this.value)">${["pending","approved","rejected","completed","cancelled"].map(s=>`<option value="${s}" ${o.status===s?"selected":""}>${statusLabel(s)}</option>`).join("")}</select>${o.receipt_url?`<a class="link-btn" href="${esc(o.receipt_url)}" target="_blank" rel="noopener">رسید</a>`:""}</div>`).join("")||"<div class='empty'>سفارشی نیست.</div>"}</div>`;
+}
+async function setOrderStatus(id,status){const {error}=await sb.from("coin_orders").update({status,updated_at:new Date().toISOString()}).eq("id",id);if(error)toast(error.message,false);else toast("وضعیت سفارش تغییر کرد.");}
+async function adminSupport(){
+  const {data}=await sb.from("support_messages").select("*").order("created_at",{ascending:false}).limit(100);
+  document.getElementById("admin-support").innerHTML=`<h2>پشتیبانی</h2><div class="admin-table">${(data||[]).map(x=>`<div class="table-row"><div><b>${esc(x.name||"کاربر")}</b><small>${esc(x.message)}</small></div><input class="mini" placeholder="پاسخ" value="${esc(x.admin_reply||"")}"><button class="primary-btn small" onclick="replySupport('${x.id}',this.previousElementSibling.value)">پاسخ</button></div>`).join("")||"<div class='empty'>پیامی نیست.</div>"}</div>`;
+}
+async function replySupport(id,reply){const {error}=await sb.from("support_messages").update({admin_reply:reply,status:"answered",updated_at:new Date().toISOString()}).eq("id",id);if(error)toast(error.message,false);else toast("پاسخ ذخیره شد.");adminSupport();}
+
+document.getElementById("year").textContent=new Date().getFullYear();
+sb.auth.onAuthStateChange(async()=>{await getSession();});
+(async()=>{await loadSettings();await getSession();renderCalendar();loadProducts();})();
+</script>
+</body>
+</html>
